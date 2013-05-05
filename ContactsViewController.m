@@ -10,8 +10,10 @@
 #import "ContactDetailsViewController.h"
 #import "Contact.h"
 
-@interface ContactsViewController ()  // <ContactDetailsProtocol>
+@interface ContactsViewController ()  <ContactDetailsProtocol>
 @property (nonatomic, strong) NSMutableArray    *contactsArray;
+@property (nonatomic, assign) BOOL NewContactPressed;
+
 @end
 
 @implementation ContactsViewController
@@ -21,28 +23,54 @@
     self = [super initWithStyle:style];
     if (self) {
         // Custom initialization
+        
     }
     return self;
 }
+- (IBAction)NewContactPressed:(id)sender {
+    self.NewContactPressed = true;
+}
+
+// Override to support conditional editing of the table view.
+// This only needs to be implemented if you are going to be returning NO
+// for some items. By default, all items are editable.
+- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
+    // Return YES if you want the specified item to be editable.
+    return YES;
+}
+
+// Override to support editing the table view.
+- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
+    if (editingStyle == UITableViewCellEditingStyleDelete) {
+        //add code here for when you hit delete
+        [self contactHasBeenDeleted:[self.contactsArray objectAtIndex:indexPath.row]];
+    }
+}
+
+- (void)didMoveToParentViewController:(UIViewController *)parent
+{
+    // parent is nil if this view controller was removed
+    self.NewContactPressed = false;
+}
+
 
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    
+    self.NewContactPressed = false;
     
     self.contactsArray = [NSMutableArray array];
     [self.contactsArray addObject:[[Contact alloc] initWithDetails:@"jon" last:@"bensamoun" yrs:32]];
     [self.contactsArray addObject:[[Contact alloc] initWithDetails:@"georg" last:@"chimion" yrs:33]];
     [self.contactsArray addObject:[[Contact alloc] initWithDetails:@"ian" last:@"king" yrs:34]];
     
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(contactHasBeenDeleted)
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(contactHasBeenDeleted:)
                                                  name:@"HEY_DELETE_CONTACT" object:nil];
-    
-
-    
-    
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(contactDetailsWereChanged)
                                                  name:@"HEY_RELOAD_TABLE" object:nil];
+    
 }
 
 - (void)didReceiveMemoryWarning
@@ -72,6 +100,8 @@
     Contact *contact = [self.contactsArray objectAtIndex:indexPath.row];
     [cell.textLabel setText:[NSString stringWithFormat:@"%@ %@ (%@)", contact.firstname, contact.lastname, contact.age]];
     
+    
+    
     return cell;
 }
 
@@ -79,8 +109,19 @@
 {
 
     ContactDetailsViewController *destinationVC = [segue destinationViewController];
-//    [destinationVC setDelegate:self];
-    [destinationVC setDisplayedContact:[self.contactsArray objectAtIndex:[self.tableView indexPathForSelectedRow].row]];
+    [destinationVC setDelegate:self];
+    
+    if (self.NewContactPressed)
+    {
+ 
+        [destinationVC setIsNewContact:true];
+    }
+    else
+    {
+        [destinationVC setIsNewContact:false];
+    }
+
+        [destinationVC setDisplayedContact:[self.contactsArray objectAtIndex:[self.tableView indexPathForSelectedRow].row]];
 }
 
 
@@ -91,16 +132,21 @@
     [self.tableView reloadData];
 }
 
--(void)contactHasBeenDeleted:(NSNotification*) notification
+-(void)contactHasBeenDeleted:(Contact *) contactToDelete
 {
-    Contact * contactToDelete = [[notification userInfo] valueForKey:@"contactToDelete"];
+    //Contact * contactToDelete = notification.object;
     
-    [self.contactsArray removeObjectIdenticalTo: contactToDelete];
+    [self.contactsArray removeObject:contactToDelete];
     
     [self.tableView reloadData];
 }
 
-
+-(void)contactHasBeenCreated:(Contact *) contactToCreate
+{
+    [self.contactsArray addObject:contactToCreate];
+    
+    [self.tableView reloadData];
+}
 
 
 

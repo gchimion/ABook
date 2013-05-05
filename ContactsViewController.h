@@ -7,11 +7,13 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "Contact.h"
 
 @interface ContactsViewController : UITableViewController
 
 -(void)contactDetailsWereChanged;
 
--(void)contactHasBeenDeleted:(NSNotification*) notification;
+-(void)contactHasBeenDeleted:(Contact *) contactToDelete;
+-(void)contactHasBeenCreated:(Contact *) contactToCreate;
 
 @end
